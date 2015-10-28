@@ -7,7 +7,16 @@ class ChatRoom(object):
         self.pending = []
         self.clients = {}
         threading.Thread(target=self.run_room).start()
-        
+    
+    def _critical_section(f):
+        def inner(self, *args, **kwargs):
+            self.cv.acquire()
+            rval = f(self, *args, **kwargs)
+            self.cv.notify()
+            self.cv.release()
+            return rval
+        return inner
+
     def run_room(self):
         self.cv.acquire()
         while 1:
@@ -20,19 +29,15 @@ class ChatRoom(object):
                     del self.clients[name]
             self.pending[:] = []
 
+    @_critical_section
     def add_client(self, name, client):
-        self.cv.acquire()
         self.clients[name] = client
         client.sendall('Members: {}\n'.format(', '.join(self.clients.keys())))
         self.pending.append(name + ' has joined\n')
-        self.cv.notify()
-        self.cv.release()
     
+    @_critical_section
     def enqueue_message(self, mesg):
-        self.cv.acquire()
         self.pending.append(mesg)
-        self.cv.notify()
-        self.cv.release()
 
 
 class ChatServer(object):
