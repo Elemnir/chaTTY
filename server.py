@@ -8,16 +8,13 @@ class ChatRoom(object):
         self.clients = {}
         threading.Thread(target=self.run_room).start()
     
-    def _critical_section(f):
-        def inner(self, *args, **kwargs):
-            self.cv.acquire()
-            try: 
-                rval = f(self, *args, **kwargs)
+    def _critical_section(wrapped):
+        def wrapper(self, *args, **kwargs):
+            with self.cv:
+                rval = wrapped(self, *args, **kwargs)
                 self.cv.notify()
-            finally:
-                self.cv.release()
             return rval
-        return inner
+        return wrapper
 
     def run_room(self):
         self.cv.acquire()
