@@ -11,9 +11,11 @@ class ChatRoom(object):
     def _critical_section(f):
         def inner(self, *args, **kwargs):
             self.cv.acquire()
-            rval = f(self, *args, **kwargs)
-            self.cv.notify()
-            self.cv.release()
+            try: 
+                rval = f(self, *args, **kwargs)
+                self.cv.notify()
+            finally:
+                self.cv.release()
             return rval
         return inner
 
