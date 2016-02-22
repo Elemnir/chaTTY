@@ -18,5 +18,5 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("port", type=int)
     parser.add_argument("cmd")
-    args=parser.parse_args()
+    args = parser.parse_args()
     serve("0.0.0.0", args.port, args.cmd)
